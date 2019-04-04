@@ -13,7 +13,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.GridLayout;
+import java.awt.Point;
 
 public class game_of_life{
 
@@ -30,19 +34,27 @@ public class game_of_life{
 		public void mouseClicked(MouseEvent e){
 			int x=(int)(e.getX()/size);
 			int y=(int)(e.getY()/size);
-			cells[x][y]=(cells[x][y]+1)%2;
-			cellPlane.revalidate();
+			int state = cells[x][y]=(cells[x][y]+1)%2;
+			if(state==ALIVE)
+				alive.add(new Point(x, y));
+			else
+				alive.remove(new Point(x, y));
 			cellPlane.repaint();
-
-			nClicks++;
-			if(nClicks==10){
-				evolver = new Evolver();
-				evolver.start();
+		}
+	};
+	private static final KeyListener kl = new KeyAdapter(){
+		@Override
+		public void keyReleased(KeyEvent e){
+			if(e.getKeyCode() == KeyEvent.VK_SPACE){
+				if(evolver!=null && evolver.isAlive())
+					stop();
+				else
+					start();
 			}
 		}
 	};
 
-	private static int tickMillis = 50;
+	private static int tickMillis = 100;
 	private static int nX=50;
 	private static int nY=50;
 	private static int size=10;
@@ -50,8 +62,8 @@ public class game_of_life{
 	private static int[][] cells = new int[nX][nY];
 	private static final int ALIVE = 1;
 	private static final int DEAD = 0;
+	private static ArrayList<Point> alive = new ArrayList<Point>();
 
-	private static int nClicks = 0;
 	private static Evolver evolver;
 
 	public static void main(String[] args){
@@ -62,12 +74,19 @@ public class game_of_life{
 
 		cellPlane=new CellPlane();
 		cellPlane.addMouseListener(ml);
-
 		frame.setContentPane(cellPlane);
+
+		frame.addKeyListener(kl);
+
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 
+	}
+
+	private static void start(){
+		evolver = new Evolver();
+		evolver.start();
 	}
 
 	private static void update(){
@@ -76,6 +95,8 @@ public class game_of_life{
 		for(int i=0; i<nX; i++){
 			next[i]=cells[i].clone();
 		}
+
+		alive.clear();
 
 		for(int i=0; i<nX; i++){
 			for(int j=0; j<nY; j++){
@@ -100,22 +121,29 @@ public class game_of_life{
 
 				int state = cells[i][j];
 
-				if(state==DEAD && sum==3)
+				if(state==DEAD && sum==3){
 					next[i][j]=ALIVE;
-				else if(state==ALIVE && sum==2)
+					alive.add(new Point(i, j));
+				}
+				else if(state==ALIVE && sum==2){
 					next[i][j]=ALIVE;
-				else if(state==ALIVE && sum==3)
+					alive.add(new Point(i, j));
+				}
+				else if(state==ALIVE && sum==3){
 					next[i][j]=ALIVE;
-				else
-					next[i][j]=0;
+					alive.add(new Point(i, j));
+				}
+				else 
+					next[i][j]=DEAD;
 			}
 		}
 
 		cells=next;
-
-		cellPlane.removeAll();
-		cellPlane.revalidate();
 		cellPlane.repaint();
+	}
+
+	private static void stop(){
+		evolver.interrupt();
 	}
 
 	static class Evolver extends Thread{
@@ -135,21 +163,16 @@ public class game_of_life{
 
 		public CellPlane(){
 			super();
-			//this.setPreferredSize(new Dimension(nX*size, nY*size));
+			this.setBackground(Color.WHITE);
 		}
 
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
 
-			for(int i=0; i<nX; i++){
-				for(int j=0; j<nY; j++){
-					
-					if(cells[i][j]==ALIVE)
-						g.setColor(Color.BLACK);
-					else
-						g.setColor(Color.WHITE);
-					g.fillRect(i*size, j*size, size, size);
-				}
+			g.setColor(Color.BLACK);
+
+			for(int i=0; i<alive.size(); i++){
+				g.fillRect((int)alive.get(i).getX()*size, (int)alive.get(i).getY()*size, size, size);
 			}
 		}
 	}
