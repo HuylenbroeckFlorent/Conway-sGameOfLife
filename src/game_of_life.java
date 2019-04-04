@@ -39,6 +39,7 @@ public class game_of_life{
 				alive.add(new Point(x, y));
 			else
 				alive.remove(new Point(x, y));
+			cellPlane.revalidate();
 			cellPlane.repaint();
 		}
 	};
@@ -57,7 +58,7 @@ public class game_of_life{
 	private static int tickMillis = 100;
 	private static int nX=50;
 	private static int nY=50;
-	private static int size=10;
+	private static int size=15;
 
 	private static int[][] cells = new int[nX][nY];
 	private static final int ALIVE = 1;
@@ -139,6 +140,7 @@ public class game_of_life{
 		}
 
 		cells=next;
+		cellPlane.revalidate();
 		cellPlane.repaint();
 	}
 
