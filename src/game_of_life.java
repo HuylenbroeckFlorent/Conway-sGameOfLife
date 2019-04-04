@@ -18,6 +18,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 public class game_of_life{
 
@@ -35,12 +36,9 @@ public class game_of_life{
 			int x=(int)(e.getX()/size);
 			int y=(int)(e.getY()/size);
 			int state = cells[x][y]=(cells[x][y]+1)%2;
-			if(state==ALIVE)
-				alive.add(new Point(x, y));
-			else
-				alive.remove(new Point(x, y));
-			cellPlane.revalidate();
-			cellPlane.repaint();
+			if(!modif.contains(new Point(x, y)))
+				modif.add(new Point(x, y));
+			cellPlane.fastUpdate();
 		}
 	};
 	private static final KeyListener kl = new KeyAdapter(){
@@ -55,15 +53,15 @@ public class game_of_life{
 		}
 	};
 
-	private static int tickMillis = 100;
-	private static int nX=50;
-	private static int nY=50;
-	private static int size=15;
+	private static int tickMillis = 10;
+	private static int nX=100;
+	private static int nY=100;
+	private static int size=10;
 
 	private static int[][] cells = new int[nX][nY];
 	private static final int ALIVE = 1;
 	private static final int DEAD = 0;
-	private static ArrayList<Point> alive = new ArrayList<Point>();
+	private static ArrayList<Point> modif = new ArrayList<Point>();
 
 	private static Evolver evolver;
 
@@ -76,6 +74,7 @@ public class game_of_life{
 		cellPlane=new CellPlane();
 		cellPlane.addMouseListener(ml);
 		frame.setContentPane(cellPlane);
+		cellPlane.removeAll();
 
 		frame.addKeyListener(kl);
 
@@ -97,7 +96,7 @@ public class game_of_life{
 			next[i]=cells[i].clone();
 		}
 
-		alive.clear();
+		modif.clear();
 
 		for(int i=0; i<nX; i++){
 			for(int j=0; j<nY; j++){
@@ -124,24 +123,27 @@ public class game_of_life{
 
 				if(state==DEAD && sum==3){
 					next[i][j]=ALIVE;
-					alive.add(new Point(i, j));
+					modif.add(new Point(i, j));
 				}
 				else if(state==ALIVE && sum==2){
 					next[i][j]=ALIVE;
-					alive.add(new Point(i, j));
+					modif.add(new Point(i, j));
 				}
 				else if(state==ALIVE && sum==3){
 					next[i][j]=ALIVE;
-					alive.add(new Point(i, j));
+					modif.add(new Point(i, j));
 				}
-				else 
+				else if(state==ALIVE){
+					next[i][j]=DEAD;
+					modif.add(new Point(i, j));
+				}
+				else
 					next[i][j]=DEAD;
 			}
 		}
 
 		cells=next;
-		cellPlane.revalidate();
-		cellPlane.repaint();
+		cellPlane.fastUpdate();
 	}
 
 	private static void stop(){
@@ -168,13 +170,25 @@ public class game_of_life{
 			this.setBackground(Color.WHITE);
 		}
 
-		public void paintComponent(Graphics g){
+		/*public void paintComponent(Graphics g){
 			super.paintComponent(g);
+		}*/
 
-			g.setColor(Color.BLACK);
+		public void paint(Graphics g){
+			Rectangle r = g.getClipBounds();
+			if(r.getWidth()<=size && r.getHeight()<=size){
+				g.setColor(Color.BLACK);
 
-			for(int i=0; i<alive.size(); i++){
-				g.fillRect((int)alive.get(i).getX()*size, (int)alive.get(i).getY()*size, size, size);
+				if(cells[(int)(r.getX()/size)][(int)(r.getY()/size)]==ALIVE)
+					((Graphics2D)g).fill(r);
+				else
+					g.clearRect((int)r.getX(), (int)r.getY(), (int)r.getWidth(), (int)r.getHeight());
+			}
+		}
+
+		public void fastUpdate(){
+			for(int i=0; i<modif.size(); i++){
+				this.paintImmediately((int)modif.get(i).getX()*size, (int)modif.get(i).getY()*size, size, size);
 			}
 		}
 	}
