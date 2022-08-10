@@ -237,22 +237,27 @@ public class game_of_life{
 			for(int j=0; j<nY; j++){
 				int sum = 0;
 
-				if(i-1>=0)
+				if(i-1>=0){
 					sum+=cells[i-1][j];
-				if(i-1>=0 && j-1>=0)
-					sum+=cells[i-1][j-1];
+					if(j-1>=0)
+						sum+=cells[i-1][j-1];
+					if(j+1<nY)
+						sum+=cells[i-1][j+1];
+				}
+				
+				if(i+1<nX){
+					sum+=cells[i+1][j];
+					if(j-1>=0)
+						sum+=cells[i+1][j-1];
+					if(j+1<nY)
+						sum+=cells[i+1][j+1];
+				}
+
 				if(j-1>=0)
 					sum+=cells[i][j-1];
-				if(i+1<nX && j-1>=0)
-					sum+=cells[i+1][j-1];
-				if(i+1<nX)
-					sum+=cells[i+1][j];
-				if(i+1<nX && j+1<nY)
-					sum+=cells[i+1][j+1];
 				if(j+1<nY)
 					sum+=cells[i][j+1];
-				if(i-1>=0 && j+1<nY)
-					sum+=cells[i-1][j+1];
+
 
 				int state = cells[i][j];
 
@@ -260,16 +265,13 @@ public class game_of_life{
 					next[i][j]=ALIVE;
 					modif.add(new Point(i, j));
 				}
-				else if(state==ALIVE && sum==2){
-					next[i][j]=ALIVE;
-					modif.add(new Point(i, j));
-				}
-				else if(state==ALIVE && sum==3){
-					next[i][j]=ALIVE;
-					modif.add(new Point(i, j));
-				}
 				else if(state==ALIVE){
-					next[i][j]=DEAD;
+					if(sum == 2 || sum == 3){
+						next[i][j]=ALIVE;
+					}
+					else{
+						next[i][j]=DEAD;
+					}
 					modif.add(new Point(i, j));
 				}
 				else
